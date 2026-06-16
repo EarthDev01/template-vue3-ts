@@ -1,0 +1,6 @@
+# ถ้าทีการ execute มันล้มเหลวมันจะหยุดทันที
+set -e 
+# 1) Format + lint เฉพาะไฟล์ที่ staged
+pnpm exec lint-staged --verbose
+# 2) TypeScript / Vue type errors ทั้งโปรเจกต์
+pnpm run type-check
