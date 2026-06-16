@@ -1,0 +1,1 @@
+node scripts/hooks/block-main-rebase.mjs "$@"

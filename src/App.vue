@@ -1,7 +1,7 @@
 <script setup lang="ts"></script>
 
 <template>
-  <h1>You did its!</h1>
+  <h1>You did its! s</h1>
   <p>
     Visit <a
       href="https://vuejs.org/"

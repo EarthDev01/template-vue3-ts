@@ -1,0 +1,7 @@
+set -e
+
+# TypeScript / Vue type-check ก่อน push
+npm run type-check
+
+# Security: scan secret ก่อน push
+node scripts/hooks/scan-secrets.mjs

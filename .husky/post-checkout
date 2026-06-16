@@ -1,0 +1,4 @@
+# $3 = 1 เมื่อ checkout branch (ไม่ใช่แค่ checkout file)
+if [ "$3" = "1" ]; then
+  node scripts/hooks/scan-secrets.mjs
+fi

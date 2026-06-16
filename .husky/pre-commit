@@ -1,6 +1,10 @@
-# ถ้าทีการ execute มันล้มเหลวมันจะหยุดทันที
-set -e 
-# 1) Format + lint เฉพาะไฟล์ที่ staged
+set -e
+
+# Policy: ห้าม commit ตรง main/master
+node scripts/hooks/block-protected-branch.mjs
+
+# ตรวจชื่อไฟล์ (staged)
+node scripts/hooks/check-filenames.mjs
+
+# Format + lint + sort import (เฉพาะไฟล์ staged)
 npm exec lint-staged --verbose
-# 2) TypeScript / Vue type errors ทั้งโปรเจกต์
-npm run type-check
