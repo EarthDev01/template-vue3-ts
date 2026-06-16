@@ -4,3 +4,6 @@ set -e
 pnpm exec lint-staged --verbose
 # 2) TypeScript / Vue type errors ทั้งโปรเจกต์
 pnpm run type-check
+
+# ข้าม hook (hotfix ฉุกเฉินเท่านั้น)
+# git commit --no-verify -m "hotfix: emergency"
