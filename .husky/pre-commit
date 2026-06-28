@@ -1,6 +1,6 @@
 set -e
 
-# Policy: ห้าม commit ตรง main/master
+# Policy: ห้าม commit ตรง branch ที่กำหนดไว้
 node scripts/hooks/block-protected-branch.mjs
 
 # ตรวจชื่อไฟล์ (staged)
