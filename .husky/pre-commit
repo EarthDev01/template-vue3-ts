@@ -1,10 +1,9 @@
+#!/usr/bin/env sh
 set -e
 
-# Policy: ห้าม commit ตรง branch ที่กำหนดไว้
-node scripts/hooks/block-protected-branch.mjs
+HOOK_NAME=pre-commit
+. "$(dirname "$0")/../scripts/hooks/run-step.sh"
 
-# ตรวจชื่อไฟล์ (staged)
-node scripts/hooks/check-filenames.mjs
-
-# Format + lint + sort import (เฉพาะไฟล์ staged)
-npm exec lint-staged --verbose
+run_step "protected branch" node scripts/hooks/block-protected-branch.mjs
+run_step "filename check" node scripts/hooks/check-filenames.mjs
+run_step "lint-staged" npm exec lint-staged

@@ -37,7 +37,7 @@ for (const file of stagedFiles) {
 
 // ถ้ามี error ให้แสดงข้อความที่ผิดพลาด
 if (errors.length > 0) {
-  console.error('❌ filename convention failed:\n')
+  console.error('filename check failed: see list below')
   for (const error of errors) {
     console.error(`   ${error}`)
   }

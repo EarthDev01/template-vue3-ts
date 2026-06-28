@@ -1,7 +1,8 @@
+#!/usr/bin/env sh
 set -e
 
-# TypeScript / Vue type-check ก่อน push
-npm run type-check
+HOOK_NAME=pre-push
+. "$(dirname "$0")/../scripts/hooks/run-step.sh"
 
-# Security: scan secret ก่อน push
-node scripts/hooks/scan-secrets.mjs
+run_step "type-check" npm run type-check
+run_step "secret scan" node scripts/hooks/scan-secrets.mjs

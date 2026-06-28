@@ -8,7 +8,6 @@ const props = defineProps<Props>()
 
 <template>
   <div class="card">
-    <h2>{{ props.title }}</h2>
     <!-- ❌ title ไม่มีใน Props -->
     <p>{{ props.description }}</p>
   </div>
