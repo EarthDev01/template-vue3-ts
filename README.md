@@ -159,8 +159,8 @@ npm run hooks:scan-secrets # scan secret ด้วยตัวเอง
 ### ข้าม hook (ฉุกเฉินเท่านั้น)
 
 ```sh
-git commit --no-verify -m "hotfix: emergency"   # ข้าม pre-commit + commit-msg
-git push --no-verify                             # ข้าม pre-push
+git commit --no-verify -m "feat(ui): your message"   # ข้าม pre-commit + commit-msg
+git push --no-verify                                 # ข้าม pre-push
 ```
 
 ไม่แนะนำให้ใช้เป็นปกติ — ควรมี CI เป็น safety net
