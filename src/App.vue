@@ -1,4 +1,15 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { onMounted } from 'vue'
+
+const apiKey = import.meta.env.VITE_API_KEY
+const getApiKey = () => {
+  console.log(apiKey)
+}
+
+onMounted(() => {
+  getApiKey()
+})
+</script>
 
 <template>
   <h1>You did its! s</h1>
