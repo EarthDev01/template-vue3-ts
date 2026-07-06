@@ -4,6 +4,14 @@ set -e
 HOOK_NAME=pre-commit
 . "$(dirname "$0")/../scripts/hooks/run-step.sh"
 
+# protected branch
 run_step "protected branch" node scripts/hooks/block-protected-branch.mjs
+
+# filename check
 run_step "filename check" node scripts/hooks/check-filenames.mjs
+
+# lint-staged
 run_step "lint-staged" npm exec lint-staged
+
+# type-check
+run_step "type-check" npm run type-check
