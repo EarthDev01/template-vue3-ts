@@ -1,0 +1,97 @@
+# lefthook.yml
+#
+# ติดตั้ง: lefthook install
+# Docs: https://github.com/evilmartians/lefthook
+
+min_version: 1.6.0
+# ปิดสี/กรอบ — Cursor/VS Code Git dialog แสดง ANSI codes เป็นตัวเลขอ่านไม่ออก
+colors: false
+no_tty: true
+# แสดงเฉพาะ error จาก hook scripts ไม่แสดงกรอบ summary ของ lefthook
+output: false
+
+# ==========================================
+# 1. PRE-COMMIT HOOKS
+# ==========================================
+pre-commit:
+  parallel: false # ปิด parallel เฉพาะจุดนี้เพื่อให้การเช็ค branch และชื่อไฟล์ทำงานเสร็จตามลำดับก่อน
+  commands:
+    # เงื่อนไข: เช็คว่าต้องไม่ใช่การ commit ลง branch main โดยตรง
+    check-branch:
+      run: |
+        current_branch=$(git rev-parse --abbrev-ref HEAD)
+        if [ "$current_branch" = "main" ] || [ "$current_branch" = "master" ]; then
+          echo "❌ Direct commits to '$current_branch' are not allowed." >&2
+          echo "👉 Please create a feature branch and use a Pull Request instead." >&2
+          exit 1
+        fi
+
+    # เงื่อนไข: เช็คชื่อไฟล์ (บังคับให้ไฟล์ .go ทุกไฟล์ใช้ snake_case หรือ lowercase ตามมาตรฐาน Go)
+    check-file-names:
+      glob: "*.go"
+      run: |
+        for file in {staged_files}; do
+          filename=$(basename "$file")
+          # กฎ: ยอมรับเฉพาะอักษรตัวเล็ก, ตัวเลข, และขีดล่าง (_) เช่น user_repository.go
+          if ! echo "$filename" | grep -Eq '^[a-z0-9_]+\.go$'; then
+            echo "❌ Filename check failed:" >&2
+            echo "   '$file' -> Go files must use snake_case (e.g., user_service.go)." >&2
+            exit 1
+          fi
+        done
+
+    # เงื่อนไข: ตรวจสอบโค้ดโกและเช็ค Error (รันฟอร์แมต และตรวจสอบ Compiler Error / Static Analysis)
+    go-lint-and-fmt:
+      glob: "*.go"
+      run: |
+        # จัดฟอร์แมตโค้ดด้วย gofmt
+        gofmt -w {staged_files}
+        git add {staged_files}
+        
+        # ตรวจสอบ Error และ Code Quality ด้วย go vet (เครื่องมือติดตัวของ Go)
+        if ! output=$(go vet ./... 2>&1); then
+          echo "❌ Go vet failed — please fix the errors below:" >&2
+          echo "$output" >&2
+          exit 1
+        fi
+
+# ==========================================
+# 2. COMMIT-MSG HOOKS
+# ==========================================
+commit-msg:
+  commands:
+    # เงื่อนไข: ตรวจสอบข้อความ Commit Message ตามแพทเทิร์น Conventional Commits
+    validate-msg:
+      run: |
+        commit_msg=$(cat {1})
+        pattern="^(feat|fix|docs|style|refactor|perf|test|chore|build|ci)(\([a-zA-Z0-9_-]+\))?: .+"
+        if ! echo "$commit_msg" | grep -Eq "$pattern"; then
+          echo "❌ Invalid commit message format" >&2
+          echo "💡 Please use: <type>(<scope>): <description>" >&2
+          echo "🟢 Allowed types: feat, fix, docs, style, refactor, perf, test, chore, build, ci" >&2
+          exit 1
+        fi
+
+# ==========================================
+# 3. PRE-PUSH HOOKS
+# ==========================================
+pre-push:
+  parallel: true # เปิดรันควบคู่กันเพื่อความรวดเร็วก่อนจะ push
+  commands:
+    # สั่งรัน Unit Test ทั้งหมดในโปรเจกต์ก่อน Push
+    go-test:
+      run: |
+        if ! output=$(go test -v ./... 2>&1); then
+          echo "❌ Go tests failed:" >&2
+          echo "$output" >&2
+          exit 1
+        fi
+
+    # ทดลองสั่ง Build โปรเจกต์จริงเพื่อเมคชัวร์ว่าไม่มีตัวแปรหรือฟังก์ชันไหนพัง
+    go-build:
+      run: |
+        if ! output=$(go build -o /dev/null ./... 2>&1); then
+          echo "❌ Go build failed:" >&2
+          echo "$output" >&2
+          exit 1
+        fi
