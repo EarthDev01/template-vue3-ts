@@ -1,0 +1,28 @@
+commit_msg_file=$1
+commit_msg=$(cat "$commit_msg_file")
+
+echo "📝 [Git · Commit-Message] Validating commit message format..."
+
+# Regex สำหรับตรวจสอบแพทเทิร์น Conventional Commits
+# รองรับ: type(scope): description หรือ type: description
+pattern="^(feat|fix|docs|style|refactor|perf|test|chore|build|ci)(\([a-zA-Z0-9_-]+\))?: .+"
+
+if ! echo "$commit_msg" | grep -Eq "$pattern"; then
+  echo "=========================================================================" >&2
+  echo "❌ [Git · Commit-Message] Invalid commit message format!" >&2
+  echo "=========================================================================" >&2
+  echo "👉 Your message: \"$commit_msg\"" >&2
+  echo "" >&2
+  echo "💡 Please use the Conventional Commits format:" >&2
+  echo "   <type>(<scope>): <description>" >&2
+  echo "" >&2
+  echo "🟢 Allowed types: feat, fix, docs, style, refactor, perf, test, chore, build, ci" >&2
+  echo "🟢 Examples:" >&2
+  echo "   - feat(auth): add google login button" >&2
+  echo "   - fix(cart): resolve total price calculation bug" >&2
+  echo "   - chore: update package.json dependencies" >&2
+  echo "=========================================================================" >&2
+  exit 1
+fi
+
+echo "✅ [Git · Commit-Message] Commit message format is valid."

@@ -1,0 +1,91 @@
+# Husky รัน hook ด้วย `sh -e` — คำสั่งที่ exit non-zero จะหยุด script ทันที
+# ต้องใช้ `|| true` หรือ `if ! cmd` กับคำสั่งที่ "ไม่เจอผลลัพธ์" ถือว่าปกติ
+
+echo "🔍 [Git · Pre-Commit] Running validations before commit..."
+echo "   steps: branch → filenames → format → types"
+
+# ----------------------------------------------------
+# ข้อ 1: เช็คว่ากำลัง commit อยู่บน branch 'main' หรือไม่
+# ----------------------------------------------------
+echo "🌿 [Git · Pre-Commit · 1/4] Checking branch protection..."
+current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+if [ "$current_branch" = "main" ] || [ "$current_branch" = "master" ]; then
+  echo "❌ [Git · Pre-Commit · 1/4] Direct commits to '$current_branch' are not allowed." >&2
+  echo "👉 Please create a feature branch and use a Pull Request instead." >&2
+  exit 1
+fi
+
+
+# ----------------------------------------------------
+# ข้อ 2: ตรวจเช็คชื่อไฟล์ (เฉพาะไฟล์ที่ staged เท่านั้น)
+#   .vue  → PascalCase (เช่น App.vue, UserProfile.vue)
+#   .ts/.js → camelCase (เช่น main.ts, useAuth.ts)
+# ----------------------------------------------------
+echo "📁 [Git · Pre-Commit · 2/4] Checking file naming on staged files..."
+staged_files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(vue|ts|js)$' || true)
+
+if [ -n "$staged_files" ]; then
+  # สร้างตัวแปรไว้เก็บข้อความ Error ทั้งหมด
+  error_messages=""
+
+  for file in $staged_files; do
+    filename=$(basename "$file")
+
+    case "$filename" in
+      *.vue)
+        if ! echo "$filename" | grep -Eq '^[A-Z][a-zA-Z0-9]*\.vue$'; then
+          error_messages="${error_messages}
+❌ [Naming Error] '$file' -> Vue files must use PascalCase (e.g., UserProfile.vue)."
+        fi
+        ;;
+      *.ts|*.js)
+        if ! echo "$filename" | grep -Eq '^[a-z][a-zA-Z0-9]*\.(ts|js)$'; then
+          error_messages="${error_messages}
+❌ [Naming Error] '$file' -> TS/JS files must use camelCase (e.g., useAuth.ts)."
+        fi
+        ;;
+    esac
+  done
+
+  # ถ้าตรวจสอบเสร็จแล้วพบว่ามี Error สะสมอยู่
+  if [ -n "$error_messages" ]; then
+    echo "==================================================" >&2
+    echo "📁 [Git · Pre-Commit · 2/4] File name validation failed!" >&2
+    echo "==================================================" >&2
+    printf '%b\n' "$error_messages" >&2
+    echo "==================================================" >&2
+    echo "👉 Please fix the file names before committing." >&2
+    exit 1
+  fi
+fi
+
+# ----------------------------------------------------
+# ข้อ 3: สั่งจัด Format โค้ดด้วย Prettier เฉพาะไฟล์ที่แก้ไข
+# ----------------------------------------------------
+echo "🧹 [Git · Pre-Commit · 3/4] Formatting staged files with Prettier..."
+# ใช้ npx prettier สั่งรันเฉพาะไฟล์ที่ staged อยู่ และจับ add กลับเข้าไปใหม่
+if [ -n "$staged_files" ]; then
+  if ! npx prettier --write $staged_files; then
+    echo "❌ [Git · Pre-Commit · 3/4] Prettier formatting failed." >&2
+    exit 1
+  fi
+  git add $staged_files
+fi
+
+
+# ----------------------------------------------------
+# ข้อ 4: ตรวจสอบ Type และ Error โค้ดของ TypeScript/Vue
+# ใช้ vue-tsc --build (project references) ไม่ใช่ --noEmit
+# เพื่อจับ error ใน .vue เช่น undefined variable, import ไม่พบ
+# ----------------------------------------------------
+echo "💻 [Git · Pre-Commit · 4/4] Checking TypeScript types on staged files..."
+if ! npx vue-tsc --build 2>&1; then
+  echo "==================================================" >&2
+  echo "❌ [Error] TypeScript/Vue type checking failed." >&2
+  echo "👉 Fix the errors above before committing." >&2
+  echo "==================================================" >&2
+  exit 1
+fi
+
+echo "✅ [Git · Pre-Commit] All validations passed — ready to commit."

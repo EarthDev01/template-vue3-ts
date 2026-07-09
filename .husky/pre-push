@@ -1,0 +1,15 @@
+# Husky รัน hook ด้วย `sh -e` — ใช้ `if ! cmd` กับคำสั่งที่อาจ fail
+
+echo "🚀 [Git · Pre-Push] Running production build before push..."
+echo "   command: npm run build (type-check + vite build)"
+
+if ! npm run build 2>&1; then
+  echo "==================================================" >&2
+  echo "❌ [Git · Pre-Push] Production build failed." >&2
+  echo "👉 Fix build errors locally before pushing." >&2
+  echo "   Tip: run 'npm run build' to see full output." >&2
+  echo "==================================================" >&2
+  exit 1
+fi
+
+echo "✅ [Git · Pre-Push] Production build passed — safe to push."
